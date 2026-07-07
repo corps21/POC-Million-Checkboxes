@@ -46,6 +46,7 @@ This project is a lightweight proof of concept for rendering and synchronizing a
 
 ## Demo
 
+https://github.com/user-attachments/assets/eb40f236-22b1-47c9-bb2b-1dd011cc2b7b
 
 
 
