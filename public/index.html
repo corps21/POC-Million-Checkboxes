@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Million Checkboxes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #16162a;
+      --bg-card: #1c1c35;
+      --border: #2a2a4a;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888aa;
+      --accent: #6c5ce7;
+      --accent-glow: rgba(108, 92, 231, 0.3);
+      --success: #00cec9;
+      --danger: #ff6b6b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 12px 20px 8px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .status-bar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 20px;
+      margin: 0 20px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      width: calc(100% - 40px);
+      flex-shrink: 0;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(0, 206, 201, 0.5);
+    }
+
+    .status-bar span {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .grid-wrapper {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      min-height: 0;
+    }
+
+    .grid-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      width: 100%;
+      height: 75vh;
+      display: flex;
+    }
+
+    #scroll-container {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+
+    #scroll-spacer {
+      position: relative;
+    }
+
+    .cb {
+      position: absolute;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      padding: 0;
+      border: 1.5px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cb:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    .cb:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 10px 16px 6px;
+      }
+
+      .grid-wrapper {
+        padding: 0 12px 12px;
+      }
+
+      .grid-card {
+        padding: 10px;
+        border-radius: 12px;
+      }
+
+      .cb {
+        width: 12px;
+        height: 12px;
+      }
+
+      .status-bar {
+        margin: 0 12px 10px;
+        font-size: 0.75rem;
+        padding: 6px 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Million Checkboxes</h1>
+    <p class="subtitle">A WebSocket-powered collaborative experience</p>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <p id="status">Connecting...</p>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="grid-card">
+      <div id="scroll-container">
+        <div id="scroll-spacer"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    (function () {
+      
+      const GRID = 1000;
+      const CELL = 16;
+      const BUFFER = 5;
+      
+      const scrollContainer = document.getElementById('scroll-container');
+      const scrollSpacer = document.getElementById('scroll-spacer');
+      const statusEl = document.getElementById('status');
+      const statusDot = document.getElementById('status-dot');
+      
+      scrollSpacer.style.width = GRID * CELL + 'px';
+      scrollSpacer.style.height = GRID * CELL + 'px';
+      
+      let checkedState = {};
+      let liveCbs = {};
+      let rafId = null;
+
+      const runWithInRange = (range, fn) => {
+        const {r0, r1, c0, c1} = range;
+        for (let y = r0; y <= r1; y++) {
+          for (let x = c0; x <= c1; x++) {
+            fn(x,y)
+          }
+        }
+      }
+
+      const getRange = () => {
+        const st = scrollContainer.scrollTop;
+        const sl = scrollContainer.scrollLeft;
+        const vh = scrollContainer.clientHeight;
+        const vw = scrollContainer.clientWidth;
+        return {
+          r0: Math.max(0, Math.floor(st / CELL) - BUFFER),
+          r1: Math.min(GRID - 1, Math.ceil((st + vh) / CELL) + BUFFER),
+          c0: Math.max(0, Math.floor(sl / CELL) - BUFFER),
+          c1: Math.min(GRID - 1, Math.ceil((sl + vw) / CELL) + BUFFER)
+        };
+      }
+
+      const removeCbsOffScreen = (range) => {
+        const {r0, r1, c0, c1} = range;
+        const toRemove = [];
+        const keys = Object.keys(liveCbs);
+
+        for (let i = 0; i < keys.length; i++) {
+          const k = keys[i];
+          const pos = liveCbs[k];
+          if (pos.y < r0 || pos.y > r1 || pos.x < c0 || pos.x > c1) {
+            pos.el.remove();
+            toRemove.push(k);
+          }
+        }
+
+        for (let j = 0; j < toRemove.length; j++) {
+          delete liveCbs[toRemove[j]];
+        }
+      }
+
+      const addOffScreen = (range) => {
+        const fragment = document.createDocumentFragment();
+        let added = false;
+        runWithInRange(range, (x,y) => {
+           const key = y * GRID + x;
+            if (!liveCbs[key]) {
+              const cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.className = 'cb';
+              cb.dataset.x = x;
+              cb.dataset.y = y;
+              cb.style.left = x * CELL + 'px';
+              cb.style.top = y * CELL + 'px';
+              if (checkedState[key]) cb.checked = true;
+              liveCbs[key] = { el: cb, x: x, y: y };
+              fragment.appendChild(cb);
+              added = true;
+            }
+        })
+
+        if (added) scrollSpacer.appendChild(fragment);
+      }
+
+      const render = () => {
+        rafId = null;
+        const range = getRange();
+        removeCbsOffScreen(range);
+        addOffScreen(range);  
+      }
+
+      const scheduleRender = () => {
+        if (rafId === null) rafId = requestAnimationFrame(render);
+      }
+
+      const socket = io();
+
+      socket.on('connect', () => {
+        statusDot.classList.add('connected');
+        console.log('Connected', socket.id)
+        statusEl.innerHTML = '<span>Connected</span> &mdash; ' + (GRID * GRID).toLocaleString() + ' checkboxes';
+      });
+
+      socket.on('disconnect', () => {
+        statusDot.classList.remove('connected');
+        statusEl.innerHTML = '<span>Disconnected</span> &mdash; reconnecting...';
+      });
+
+      socket.on('mark', ({ x, y, checked }) => {
+        const key = y * GRID + x;
+        const target = liveCbs[key];
+
+        if (checked) checkedState[key] = true;
+        else delete checkedState[key];
+
+        if (target) target.el.checked = checked;
+      })
+
+      scrollContainer.addEventListener('change', (e) => {
+        const t = e.target;
+        if (t.type === 'checkbox') {
+          const x = +t.dataset.x;
+          const y = +t.dataset.y;
+          const key = y * GRID + x;
+          if (t.checked) checkedState[key] = true;
+          else delete checkedState[key];
+          socket.emit('mark', { x, y, checked: t.checked })
+          console.log('Toggle (' + x + ', ' + y + ') -> ' + t.checked);
+        }
+      }, true);
+
+      scrollContainer.addEventListener('scroll', scheduleRender, { passive: true });
+
+      scrollContainer.scrollLeft = (GRID * CELL - scrollContainer.clientWidth) / 2;
+      scrollContainer.scrollTop = (GRID * CELL - scrollContainer.clientHeight) / 2;
+
+      socket.on('loadstate', (cs) => {
+        checkedState = cs;
+        const range = getRange();
+        runWithInRange(range, (x, y) => {
+          const key = y * GRID + x;
+          const target = liveCbs[key];
+          if (target) target.el.checked = !!checkedState[key];
+        });
+      })
+
+    })();
+  </script>
+</body>
+
+</html>
